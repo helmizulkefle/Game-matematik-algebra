@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Algebra Hero – The Math Adventure</title>
+<style>
+:root{--ink:#24304b;--pink:#ff6b9d;--blue:#4c8dff;--gold:#ffc83d;--mint:#55d6a4}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,Segoe UI,sans-serif;background:#111b38;color:var(--ink)}
+body{display:flex;align-items:center;justify-content:center;padding:12px}
+#app{width:min(1100px,100%);background:#f6f8ff;border:5px solid #fff;border-radius:24px;overflow:hidden;box-shadow:0 18px 60px #0008}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 18px;background:linear-gradient(90deg,#6e67e8,#48a7ef);color:white}
+.brand{font-weight:1000;letter-spacing:.5px;font-size:clamp(16px,3vw,24px)}.brand span{color:#ffe36b}
+#hud{display:none;gap:8px;flex-wrap:wrap;justify-content:flex-end}.pill{background:#ffffff26;border:1px solid #ffffff66;border-radius:999px;padding:6px 11px;font-weight:800;font-size:13px}
+main{position:relative;min-height:550px;background:linear-gradient(#8de2ff,#d9f7ff 58%,#a8e9a0 58%,#6bcf8a);display:flex;align-items:center;justify-content:center}
+canvas{width:100%;height:auto;display:block;touch-action:none}
+.panel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:#18294b66;z-index:3}
+.card{width:min(550px,96%);background:#fff;border:4px solid #fff;border-radius:24px;padding:24px;text-align:center;box-shadow:0 12px 35px #24304b55}
+h1{margin:0 0 8px;font-size:clamp(28px,5vw,48px);line-height:1.04;color:#5147c9;text-shadow:2px 3px #e4e1ff}
+h2{margin:4px 0 12px;color:#5147c9}.subtitle{font-weight:800;color:#52617e;margin-bottom:18px}
+button{border:0;border-radius:14px;padding:12px 18px;font-weight:900;font-size:15px;cursor:pointer;background:#4d83f5;color:white;box-shadow:0 4px 0 #315dc0;transition:transform .08s}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #315dc0}
+button.secondary{background:#eef1ff;color:#4a51a0;box-shadow:0 4px 0 #cbd2fa}button.gold{background:#ffc83d;color:#654400;box-shadow:0 4px 0 #d99c16}
+.menuBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.small{font-size:13px;color:#66718c;line-height:1.5}.hidden{display:none!important}
+#quizChoices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.choice{background:#edf3ff;color:#27365d;box-shadow:0 4px 0 #c7d6f4;border:2px solid #d7e4ff}
+.choice.selected{background:#d9f8ec;border-color:#45c995}
+.feedback{min-height:28px;font-weight:900;margin:8px}
+.controls{display:none;position:absolute;bottom:12px;left:0;right:0;justify-content:space-between;padding:0 16px;pointer-events:none;z-index:2}
+.pad{display:flex;gap:12px}.controls button{pointer-events:auto;width:58px;height:58px;border-radius:18px;background:#ffffffd9;color:#34446c;font-size:23px;padding:0;box-shadow:0 4px 0 #9eafd4}
+#bottom{padding:10px 16px;background:#fff;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#68728d}
+@media(max-width:650px){body{padding:0}#app{border:0;border-radius:0;min-height:100vh}main{min-height:520px}header{padding:10px}#hud{gap:4px}.pill{font-size:11px;padding:5px 8px}.controls{display:flex}.card{padding:18px}.small{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand">⚡ ALGEBRA <span>HERO</span></div><div id="hud">
+ <div class="pill">👤 <span id="playerLabel">Pemain</span></div><div class="pill">⭐ <span id="score">0</span></div><div class="pill">🪙 <span id="coins">0</span></div>
+ <div class="pill">❤️ <span id="lives">3</span></div><div class="pill">🧠 <span id="correct">0</span>/<span id="answered">0</span></div>
+</div></header>
+<main id="stage">
+<canvas id="game" width="960" height="540" aria-label="Permainan platformer Algebra Hero"></canvas>
+<div class="panel" id="menu"><div class="card">
+ <div style="font-size:56px">🦸‍♂️</div><h1>ALGEBRA HERO</h1><div class="subtitle">THE MATH ADVENTURE</div>
+ <p><b>Lompat, Kumpul, Selesaikan Algebra!</b></p>
+ <p class="small">Terokai 3 dunia, kumpulkan coin dan selesaikan cabaran algebra untuk membuka laluan.</p>
+ <div class="name-entry">
+  <label for="studentName">✏️ Nama murid</label>
+  <input id="studentName" type="text" maxlength="24" autocomplete="given-name" placeholder="Taip nama anda di sini">
+  <div class="name-error" id="nameError"></div>
+ </div>
+ <div class="menuBtns"><button id="play">▶ PLAY</button><button class="secondary" id="how">HOW TO PLAY</button><button class="secondary" id="scores">HIGH SCORE</button><button class="gold" id="rewards">🏆 REWARD BOX</button></div>
+ <p class="small" id="menuInfo"></p>
+ </div></div>
+<div class="panel hidden" id="quiz"><div class="card">
+ <div style="font-size:34px">🔐✨</div><h2>GERBANG ALGEBRA</h2><p id="levelTag" class="small"></p>
+ <h2 id="question" style="color:#27365d"></h2><div id="quizChoices"></div>
+ <div class="feedback" id="feedback"></div><div class="menuBtns"><button id="submit">HANTAR JAWAPAN</button><button class="secondary hidden" id="continue">TERUSKAN ➜</button></div>
+ </div></div>
+<div class="panel hidden" id="result"><div class="card">
+ <div style="font-size:54px" id="resultIcon">🏆</div><h1 id="resultTitle">LEVEL SELESAI!</h1><p id="resultText"></p><div class="menuBtns"><button id="next">NEXT LEVEL ➜</button><button class="secondary" id="again">MAIN SEMULA</button><button class="secondary" id="home">MENU UTAMA</button></div>
+ </div></div>
+<div class="panel hidden" id="info"><div class="card"><h2 id="infoTitle">CARA BERMAIN</h2><p id="infoText" class="small" style="font-size:15px"></p><div class="menuBtns"><button id="infoClose">FAHAM!</button></div></div></div>
+<div class="controls" id="controls"><div class="pad"><button id="left">◀</button><button id="right">▶</button></div><button id="jump">⬆</button></div>
+</main>
+<div id="bottom"><span>⌨️ Keyboard: ← → / A D untuk bergerak · Space / ↑ / W untuk lompat</span><span>Direka untuk Matematik Tingkatan 1</span></div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const panels=['menu','quiz','result','info'];
+function show(id){panels.forEach(p=>$(p).classList.toggle('hidden',p!==id));$('hud').style.display=id==='menu'?'none':'flex';$('controls').style.display=(id==='menu'||id==='info'||id==='quiz'||id==='result')?'none':''}
+const levels=[
+ {name:'THE GREEN JUNGLE',sky:'#8de2ff',ground:'#65c879',platform:'#8a593b',questions:[
+  ['Jika x + 5 = 12, cari nilai x.',['5','7','8','17'],1,'Tolak 5 pada kedua-dua belah: x = 12 − 5 = 7.'],
+  ['Jika y − 3 = 8, cari nilai y.',['5','11','24','8'],1,'Tambah 3 pada kedua-dua belah: y = 8 + 3 = 11.'],
+  ['Jika 2x = 14, cari nilai x.',['12','7','16','28'],1,'Bahagi kedua-dua belah dengan 2: x = 14 ÷ 2 = 7.'],
+  ['Jika x + 9 = 16, cari nilai x.',['6','7','8','25'],1,'Tolak 9 pada kedua-dua belah: x = 16 − 9 = 7.'],
+  ['Jika a − 6 = 5, cari nilai a.',['1','11','12','30'],1,'Tambah 6 pada kedua-dua belah: a = 5 + 6 = 11.'],
+  ['Jika 3m = 24, cari nilai m.',['6','7','8','9'],2,'Bahagi kedua-dua belah dengan 3: m = 24 ÷ 3 = 8.']
+ ]},
+ {name:'THE MAGIC CAVE',sky:'#b9a6ff',ground:'#7865c9',platform:'#7451a6',questions:[
+  ['Jika 3x + 2 = 17, cari nilai x.',['3','5','7','15'],1,'Tolak 2: 3x = 15. Bahagi 3: x = 5.'],
+  ['Jika 4y − 5 = 15, cari nilai y.',['4','10','5','20'],2,'Tambah 5: 4y = 20. Bahagi 4: y = 5.'],
+  ['Jika 2x + 6 = 20, cari nilai x.',['6','7','8','13'],1,'Tolak 6: 2x = 14. Bahagi 2: x = 7.'],
+  ['Jika 2x + 3 = 13, cari nilai x.',['4','5','6','8'],1,'Tolak 3: 2x = 10. Bahagi 2: x = 5.'],
+  ['Jika 5y − 4 = 21, cari nilai y.',['3','4','5','6'],2,'Tambah 4: 5y = 25. Bahagi 5: y = 5.'],
+  ['Jika 3a + 7 = 25, cari nilai a.',['5','6','7','8'],1,'Tolak 7: 3a = 18. Bahagi 3: a = 6.']
+ ]},
+ {name:'THE SKY CASTLE',sky:'#ffc8e3',ground:'#78c8d8',platform:'#9974cf',questions:[
+  ['Jika 5x − 7 = 18, cari nilai x.',['3','5','7','25'],1,'Tambah 7: 5x = 25. Bahagi 5: x = 5.'],
+  ['Jika 3(x + 2) = 21, cari nilai x.',['5','7','9','19'],0,'Bahagi 3: x + 2 = 7. Tolak 2: x = 5.'],
+  ['Jika 2x + 5 = x + 12, cari nilai x.',['5','6','7','17'],2,'Tolak x dan 5 pada kedua-dua belah: x = 12 − 5 = 7.'],
+  ['Jika 4x + 3 = 2x + 13, cari nilai x.',['3','4','5','6'],2,'Tolak 2x dan 3: 2x = 10. Bahagi 2: x = 5.'],
+  ['Jika 2(x + 4) = 18, cari nilai x.',['4','5','6','9'],1,'Bahagi 2: x + 4 = 9. Tolak 4: x = 5.'],
+  ['Jika 7x − 9 = 26, cari nilai x.',['3','4','5','6'],2,'Tambah 9: 7x = 35. Bahagi 7: x = 5.'],
+  ['Jika 3x + 4 = 19, cari nilai x.',['4','5','6','7'],1,'Tolak 4: 3x = 15. Bahagi 3: x = 5.']
+ ]}
+];
+let level=0,score=0,coins=0,lives=3,answered=0,correct=0,gateIndex=0,quizChoice=-1,quizDone=false,gameState='menu',high=+(localStorage.getItem('algebraHeroHigh')||0);
+let playerName=localStorage.getItem('algebraHeroPlayerName')||'';
+$('studentName').value=playerName;
+function setPlayerName(name){playerName=name.trim().replace(/\\s+/g,' ').slice(0,24);$('playerLabel').textContent=playerName||'Pemain';localStorage.setItem('algebraHeroPlayerName',playerName);}
+let player={x:65,y:390,w:34,h:46,vx:0,vy:0,on:false,face:1,inv:0};
+let camera=0,frame=0,platforms=[],coinItems=[],hazards=[],gates=[],worldW=1500;
+const keys={};
+function buildLevel(){
+ const groundY=465;platforms=[{x:0,y:groundY,w:340,h:80},{x:390,y:groundY,w:250,h:80},{x:690,y:groundY,w:300,h:80},{x:1040,y:groundY,w:460,h:80},
+ {x:220,y:370,w:120,h:18},{x:470,y:330,w:130,h:18},{x:760,y:365,w:130,h:18},{x:1050,y:310,w:130,h:18},{x:1250,y:380,w:120,h:18}];
+ if(level>0){platforms.push({x:585,y:250,w:110,h:18},{x:930,y:265,w:110,h:18});}
+ if(level>1){platforms.push({x:1140,y:220,w:100,h:18});}
+ coinItems=[];for(let x=150;x<1450;x+=105){coinItems.push({x,y:(x%3===0?315:410),got:false});}
+ hazards=level===0?[{x:370,y:443,w:22,h:22},{x:660,y:443,w:22,h:22},{x:1000,y:443,w:22,h:22}]:
+ [{x:360,y:443,w:25,h:22},{x:655,y:443,w:25,h:22},{x:1000,y:443,w:25,h:22},{x:1190,y:443,w:25,h:22}];
+ gates=level===2?[210,400,590,780,970,1160,1350]:[250,480,710,940,1170,1400];gateIndex=0;player={x:65,y:390,w:34,h:46,vx:0,vy:0,on:false,face:1,inv:0};camera=0;
+}
+function updateHud(){$('score').textContent=score;$('coins').textContent=coins;$('lives').textContent=lives;$('correct').textContent=correct;$('answered').textContent=answered}
+function startGame(l=0,reset=true){level=l;if(reset){score=0;coins=0;lives=3;answered=0;correct=0;}buildLevel();gameState='play';show('menu');$('menu').classList.add('hidden');}
+function drawBackground(){
+ const L=levels[level];ctx.fillStyle=L.sky;ctx.fillRect(0,0,960,540);
+ // sun/moon
+ ctx.fillStyle='#fff5a6';ctx.beginPath();ctx.arc(820,85,38,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<8;i++){let x=((i*180-camera*.25)%1100+1100)%1100-60;let y=70+(i%3)*48;ctx.fillStyle='#ffffffa8';ctx.beginPath();ctx.ellipse(x,y,38,13,0,0,Math.PI*2);ctx.ellipse(x+25,y-8,28,17,0,0,Math.PI*2);ctx.ellipse(x+48,y,34,13,0,0,Math.PI*2);ctx.fill();}
+ ctx.fillStyle=level===0?'#63c77d':level===1?'#7762bc':'#73c6d5';ctx.beginPath();ctx.moveTo(0,440);for(let x=0;x<=960;x+=80)ctx.lineTo(x,390+Math.sin((x+camera*.15)/100)*24);ctx.lineTo(960,540);ctx.lineTo(0,540);ctx.fill();
+}
+function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function draw(){
+ frame++;drawBackground();ctx.save();ctx.translate(-camera,0);
+ // platforms
+ platforms.forEach((p,i)=>{roundRect(p.x,p.y,p.w,p.h,8,levels[level].platform);roundRect(p.x,p.y,p.w,8,5,level===0?'#54db83':level===1?'#d0a8ff':'#f2a8d5');});
+ // hazards
+ hazards.forEach(h=>{ctx.fillStyle='#ff5c75';ctx.beginPath();ctx.moveTo(h.x,h.y+h.h);ctx.lineTo(h.x+h.w/2,h.y);ctx.lineTo(h.x+h.w,h.y+h.h);ctx.fill();});
+ // coins
+ coinItems.forEach(c=>{if(c.got)return;let bob=Math.sin((frame+c.x)*.08)*4;ctx.fillStyle='#ffc83d';ctx.beginPath();ctx.ellipse(c.x,c.y+bob,11,14,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff19a';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#b97812';ctx.font='bold 13px sans-serif';ctx.fillText('$',c.x-4,c.y+5+bob);});
+ // Gerbang algebra: setiap gerbang mewakili satu soalan
+ gates.forEach((gx,i)=>{
+  if(i<gateIndex){roundRect(gx,445,55,20,5,'#55d6a4');return;}
+  roundRect(gx,365,55,100,10,'#4b3a86');roundRect(gx+8,375,39,90,7,'#b78bff');
+  ctx.fillStyle='#ffe36b';ctx.beginPath();ctx.arc(gx+28,415,5,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText('?',gx+23,397);
+ });
+ // player
+ if(!(player.inv>0&&Math.floor(frame/5)%2===0)){
+ ctx.save();ctx.translate(player.x+player.w/2,player.y+player.h/2);if(player.face<0)ctx.scale(-1,1);
+ // legs
+ roundRect(-12,12,9,15,4,'#354d9b');roundRect(3,12,9,15,4,'#354d9b');
+ // body
+ roundRect(-15,-9,30,26,9,'#ffb33e');roundRect(-11,-5,22,18,6,'#4b80ee');
+ // head
+ ctx.fillStyle='#ffd0a3';ctx.beginPath();ctx.arc(0,-18,15,0,7);ctx.fill();
+ ctx.fillStyle='#49352f';ctx.beginPath();ctx.arc(-2,-28,14,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-15,-27,7,9);
+ ctx.fillStyle='#24304b';ctx.beginPath();ctx.arc(5,-19,2,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(10,-13,4,0,Math.PI);ctx.strokeStyle='#b65c5c';ctx.stroke();
+ ctx.restore();}
+ ctx.restore();
+ // gate prompt / progress
+ ctx.fillStyle='#24304b';ctx.font='bold 15px system-ui';ctx.fillText(`DUNIA ${level+1}: ${levels[level].name}`,20,28);
+ ctx.fillStyle='#ffffffaa';ctx.fillRect(20,42,200,9);ctx.fillStyle='#4c8dff';ctx.fillRect(20,42,200*Math.min(1,player.x/worldW),9);
+}
+function collide(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function loseLife(){if(player.inv>0)return;lives--;player.inv=90;player.vy=-7;updateHud();if(lives<=0){gameState='over';show('result');$('resultIcon').textContent='💫';$('resultTitle').textContent='GAME OVER';$('resultText').textContent=`${playerName||'Pemain'}, skor anda: ${score}. Jangan putus asa — cuba lagi!`;$('next').classList.add('hidden');}}
+function update(){
+ if(gameState!=='play')return;
+ let move=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
+ player.vx=move*4.1;if(move)player.face=move;
+ if((keys.Space||keys.ArrowUp||keys.KeyW)&&player.on){player.vy=-12.5;player.on=false;}
+ player.vy+=.58;player.x+=player.vx;player.y+=player.vy;player.x=Math.max(0,Math.min(worldW-player.w,player.x));player.on=false;
+ platforms.forEach(p=>{if(player.vy>=0&&player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>=p.y&&player.y+player.h<=p.y+20){player.y=p.y-player.h;player.vy=0;player.on=true;}});
+ if(player.y>560)loseLife();
+ if(player.inv>0)player.inv--;
+ coinItems.forEach(c=>{if(!c.got&&Math.abs((player.x+player.w/2)-c.x)<22&&Math.abs((player.y+player.h/2)-c.y)<28){c.got=true;coins++;score+=10;updateHud();}});
+ hazards.forEach(h=>{if(collide(player,h))loseLife();});
+ const nextGate=gates[gateIndex];
+ if(nextGate!==undefined&&player.x+player.w>nextGate-20){player.x=nextGate-player.w-3;openQuiz();}
+ if(gateIndex>=gates.length&&player.x>worldW-100){finishLevel();}
+ camera=Math.max(0,Math.min(worldW-960,player.x-350));
+}
+function openQuiz(){gameState='quiz';quizChoice=-1;quizDone=false;let q=levels[level].questions[gateIndex];$('levelTag').textContent=levels[level].name+' · SOALAN '+(gateIndex+1)+'/'+levels[level].questions.length;$('question').textContent=q[0];$('quizChoices').innerHTML='';q[1].forEach((v,i)=>{let b=document.createElement('button');b.className='choice';b.textContent=String.fromCharCode(65+i)+'. '+v;b.onclick=()=>{quizChoice=i;document.querySelectorAll('.choice').forEach((el,j)=>el.classList.toggle('selected',i===j));};$('quizChoices').appendChild(b);});$('feedback').textContent='Pilih jawapan yang betul.';$('submit').classList.remove('hidden');$('continue').classList.add('hidden');show('quiz');}
+$('submit').onclick=()=>{if(quizChoice<0){$('feedback').textContent='Pilih satu jawapan dahulu.';return;}let q=levels[level].questions[gateIndex];if(quizChoice===q[2]){answered++;correct++;score+=50;gateIndex++;$('feedback').textContent='✅ BETUL! '+q[3];$('feedback').style.color='#159b68';$('submit').classList.add('hidden');$('continue').classList.remove('hidden');}else{$('feedback').textContent='❌ Belum tepat. Cuba pilihan lain!';$('feedback').style.color='#d34e67';quizChoice=-1;document.querySelectorAll('.choice').forEach(el=>el.classList.remove('selected'));}updateHud();};
+$('continue').onclick=()=>{gameState='play';show('menu');$('menu').classList.add('hidden');};
+function finishLevel(){gameState='result';score+=200;high=Math.max(high,score);localStorage.setItem('algebraHeroHigh',high);show('result');$('resultIcon').textContent='🏅';$('resultTitle').textContent=level===2?'YOU ARE THE ALGEBRA HERO!':'LEVEL COMPLETE!';$('resultText').textContent=`Syabas, ${playerName||'Algebra Hero'}! ${levels[level].name} selesai. Bonus +200 mata. Skor: ${score} · Coin: ${coins} · Jawapan betul: ${correct}/${answered}. Soalan dalam permainan: 19. Pingat: ${score>500?'🥇 EMAS':score>250?'🥈 PERAK':'🥉 GANGSA'}`;$('next').classList.toggle('hidden',level===2);}
+$('next').onclick=()=>{startGame(level+1,false);};$('again').onclick=()=>startGame(level,true);$('home').onclick=()=>{gameState='menu';show('menu');$('menuInfo').textContent='High Score: '+high;};
+$('play').onclick=()=>{
+ const typedName=$('studentName').value.trim();
+ if(!typedName){$('nameError').textContent='Sila masukkan nama sebelum mula bermain.';$('studentName').focus();return;}
+ setPlayerName(typedName);$('nameError').textContent='';startGame(0,true);
+};
+$('studentName').addEventListener('input',()=>{$('nameError').textContent='';});
+$('studentName').addEventListener('keydown',e=>{if(e.key==='Enter')$('play').click();});
+$('how').onclick=()=>{ $('infoTitle').textContent='CARA BERMAIN';$('infoText').innerHTML='Gerakkan hero menggunakan <b>← →</b> atau <b>A / D</b>. Tekan <b>Space, ↑ atau W</b> untuk melompat. Di telefon, gunakan butang pada skrin. Kumpulkan coin (+10 mata), elakkan duri dan dekati pintu ungu untuk menjawab soalan algebra. Jawapan betul membuka pintu (+50 mata). Selesaikan dunia untuk bonus +200 mata. Setiap dunia mempunyai beberapa gerbang algebra.';show('info');};
+$('scores').onclick=()=>{$('infoTitle').textContent='HIGH SCORE';$('infoText').textContent='Pemain: '+(playerName||'Belum didaftarkan')+'. Rekod terbaik pada peranti ini: '+high+' mata. Nama dan skor disimpan dalam browser ini.';show('info');};
+$('rewards').onclick=()=>{$('infoTitle').textContent='REWARD BOX 🏆';$('infoText').textContent='🥉 Gangsa: mula mengumpul mata. 🥈 Perak: skor melebihi 250. 🥇 Emas: skor melebihi 500. Lengkapkan ketiga-tiga dunia untuk menjadi ALGEBRA HERO!';show('info');};
+$('infoClose').onclick=()=>{show('menu');};
+function bindHold(id,key){let b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;b.setPointerCapture(e.pointerId);});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[key]=false));}
+bindHold('left','ArrowLeft');bindHold('right','ArrowRight');bindHold('jump','Space');
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;});
+window.addEventListener('keyup',e=>keys[e.code]=false);
+function loop(){update();if(gameState==='play')draw();else if(gameState==='menu'){drawBackground();}requestAnimationFrame(loop);}
+updateHud();buildLevel();show('menu');loop();
+})();
+</script>
+</body></html>
